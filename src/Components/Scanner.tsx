@@ -79,7 +79,7 @@ function Scanner() {
         <div className="flex flex-col w-full items-center">
             {!isActive && (
                 <button
-                    className="bg-[#003300] px-4 py-2 rounded mt-[30vh]"
+                    className="bg-[#003300] px-4 py-2 rounded mt-[30vh] text-white"
                     onClick={() => setIsActive(true)}
                 >
                     Scan

@@ -18,7 +18,7 @@ function Scanner() {
                 <label>QR Value</label>
                 <input
                     type="text"
-                    className="w-full rounded py-1 px-2 text-black"
+                    className="w-full rounded py-1 px-2 text-black border"
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
                 />
