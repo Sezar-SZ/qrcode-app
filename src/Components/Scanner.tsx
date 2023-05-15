@@ -1,42 +1,17 @@
-// @ts-ignore
-import { Block } from "konsta/react";
 import { BarcodeScanner } from "@capacitor-community/barcode-scanner";
 import { useEffect, useState } from "react";
+import { Browser } from "@capacitor/browser";
+import isUrl from "is-url";
 
-function Scanner({}) {
+function Scanner() {
     const [isActive, setIsActive] = useState(false);
     const [result, setResult] = useState("");
-
-    const startScan = async () => {
-        // Check camera permission
-        // This is just a simple example, check out the better checks below
-        await BarcodeScanner.checkPermission({ force: true });
-
-        // make background of WebView transparent
-        // note: if you are using ionic this might not be enough, check below
-        BarcodeScanner.hideBackground();
-
-        const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
-
-        // if the result has content
-        if (result.hasContent) {
-            setResult(result.content);
-            console.log(result.content);
-            stopScan();
-        }
-    };
-    const stopScan = () => {
-        BarcodeScanner.showBackground();
-        BarcodeScanner.stopScan();
-    };
 
     useEffect(() => {
         const checkPermission = async () => {
             const status = await BarcodeScanner.checkPermission();
 
             if (status.denied) {
-                // the user denied permission for good
-                // redirect user to app settings if they want to grant it anyway
                 const c = confirm(
                     "If you want to grant permission for using your camera, enable it in the app settings."
                 );
@@ -51,21 +26,66 @@ function Scanner({}) {
             BarcodeScanner.prepare();
         };
         prepare();
+
+        return () => {
+            BarcodeScanner.showBackground();
+            BarcodeScanner.stopScan();
+            setIsActive(false);
+        };
     }, []);
 
     useEffect(() => {
+        const startScan = async () => {
+            await BarcodeScanner.checkPermission({ force: true });
+            BarcodeScanner.hideBackground();
+
+            const result = await BarcodeScanner.startScan();
+            if (result.hasContent) {
+                setResult(result.content);
+                BarcodeScanner.showBackground();
+                BarcodeScanner.stopScan();
+                setIsActive(false);
+            }
+        };
         if (isActive) {
             startScan();
         }
     }, [isActive]);
 
+    useEffect(() => {
+        if (result) {
+            const handleResult = async () => {
+                if (!isUrl(result)) {
+                    await Browser.open({
+                        url:
+                            "https://www.google.com/search?q=" +
+                            result.split(" ").join("+"),
+                    });
+                } else {
+                    await Browser.open({
+                        url: result,
+                    });
+                }
+            };
+            BarcodeScanner.showBackground();
+            BarcodeScanner.stopScan();
+            setIsActive(false);
+            handleResult();
+            setResult("");
+        }
+    }, [result]);
+
     return (
-        <Block className="flex flex-col w-full justify-center items-center">
+        <div className="flex flex-col w-full items-center">
             {!isActive && (
-                <button onClick={() => setIsActive(true)}>Scan</button>
+                <button
+                    className="bg-[#003300] px-4 py-2 rounded mt-[30vh]"
+                    onClick={() => setIsActive(true)}
+                >
+                    Scan
+                </button>
             )}
-            <p>{result}</p>
-        </Block>
+        </div>
     );
 }
 
